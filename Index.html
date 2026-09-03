@@ -1,27 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Prueba de seminario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de seminario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo para el resultado del arreglo */
+        #resultado {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+            width: 80%;
+            font-family: Arial, sans-serif;
+        }
+        /* Estilo para el resultado de pedidos pendientes */
+        #resultado-pendientes {
+            background-color: #fff3cd;
+            padding: 15px;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            margin: 20px 0;
+            width: 80%;
+            font-family: Arial, sans-serif;
+        }
+    </style>
 </head>
-    <body>
-        <h1>Biblioteca en tu mano</h1>
-        <p>Este sistema esta diseñado para mostrar <br>
-        la informaci{on de manera segura y eficiente <br>
-        para lograr nutrirnos de conocimientos con los siguentes servicios</p>
-        <ul>Busqueda</ul>
-        <ul>Actualización</ul>
-        <ul>Resumenes</ul>
+<body class="p-8">
+    <h1 class="text-3xl font-bold mb-4">Biblioteca en tu mano</h1>
+    <p class="mb-4">Este sistema está diseñado para mostrar <br>
+    la información de manera segura y eficiente <br>
+    para lograr nutrirnos de conocimientos con los siguientes servicios:</p>
+    
+    <ul class="list-disc pl-5 mb-4">
+        <li>Búsqueda</li>
+        <li>Actualización</li>
+        <li>Resúmenes</li>
+    </ul>
+    
+    <p class="mb-4">Regístrate para acceder</p>
+    
+    <!-- Ejercicio 3.1 - Formulario con Tailwind CSS -->
+    <form action="get" class="max-w-md mx-auto mt-10 space-y-4">
+        <!-- Campo para nombre -->
+        <div>
+            <label for="nombre" class="block font-medium mb-1">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" class="w-full p-2 border rounded">
+        </div>
         
-        <p>Registrate para acceder</p>
-        <form action="get">
-            <input type="text"> 
-            <input type="tel">
-            <textarea name="nota" id="notas">Notas</textarea>
-            <button> Enviar </button>
-        </form>
+        <!-- Campo para teléfono -->
+        <div>
+            <label for="telefono" class="block font-medium mb-1">Teléfono:</label>
+            <input type="tel" id="telefono" name="telefono" class="w-full p-2 border rounded">
+        </div>
+        
+        <!-- Campo para notas -->
+        <div>
+            <label for="notas" class="block font-medium mb-1">Notas:</label>
+            <textarea id="notas" name="nota" rows="4" cols="30" class="w-full p-2 border rounded"></textarea>
+        </div>
+        
+        <!-- Botón Guardar cliente -->
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Guardar cliente
+        </button>
+    </form>
 
-        
-    </body>
+    <br><hr class="my-8"><br>
+
+    <!-- Ejercicio 3.2 - Tabla de pedidos con Tailwind CSS -->
+    <h2 class="text-2xl font-bold mb-4">Tabla de pedidos</h2>
+    <table class="w-full border-collapse">
+        <thead>
+            <tr>
+                <th class="bg-gray-100 font-semibold text-left p-2">Cliente</th>
+                <th class="bg-gray-100 font-semibold text-left p-2">Producto</th>
+                <th class="bg-gray-100 font-semibold text-left p-2">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="p-2 border">María González</td>
+                <td class="p-2 border">El principito</td>
+                <td class="p-2 border bg-yellow-100">Pendiente</td>
+            </tr>
+            <tr>
+                <td class="p-2 border">Carlos Ruiz</td>
+                <td class="p-2 border">Cien años de soledad</td>
+                <td class="p-2 border bg-blue-100">En proceso</td>
+            </tr>
+            <tr>
+                <td class="p-2 border">Ana Martínez</td>
+                <td class="p-2 border">Don Quijote de la Mancha</td>
+                <td class="p-2 border bg-green-100">Entregado</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <br><hr class="my-8"><br>
+
+    <!-- Ejercicio 2.1 - Arreglo de clientes -->
+    <h2 class="text-2xl font-bold mb-4">Lista de clientes registrados</h2>
+    <div id="resultado"></div>
+
+    <script>
+        const clientes = [
+            { nombre: "Ana López", telefono: "5512345678" },
+            { nombre: "Luis Pérez", telefono: "5587654321" }
+        ];
+
+        let html = "";
+        clientes.forEach(function(c) {
+            html += c.nombre + " - " + c.telefono + "<br>";
+        });
+        document.getElementById("resultado").innerHTML = html;
+    </script>
+
+    <br><hr class="my-8"><br>
+
+    <!-- Ejercicio 2.2 - Filtrar pedidos por estado -->
+    <h2 class="text-2xl font-bold mb-4">Pedidos pendientes</h2>
+    <div id="resultado-pendientes"></div>
+
+    <script>
+        const pedidos = [
+            { cliente: "Ana López", estado: "Pendiente" },
+            { cliente: "Luis Pérez", estado: "Entregado" },
+            { cliente: "Karla Ruiz", estado: "Pendiente" }
+        ];
+
+        const pendientes = pedidos.filter(function(p) {
+            return p.estado === "Pendiente";
+        });
+
+        let htmlPendientes = "";
+        pendientes.forEach(function(p) {
+            htmlPendientes += p.cliente + " - " + p.estado + "<br>";
+        });
+        document.getElementById("resultado-pendientes").innerHTML = htmlPendientes;
+    </script>
+
+    <br><hr class="my-8"><br>
+
+    <!-- Ejercicio 2.3 - Botón que reacciona -->
+    <h2 class="text-2xl font-bold mb-4">Actualizar estado del pedido</h2>
+    <button onclick="marcarEntregado()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4">
+        Marcar como entregado
+    </button>
+    <p id="mensaje" class="inline-block font-bold text-lg p-2 bg-gray-100 rounded">Estado: Pendiente</p>
+
+    <script>
+        function marcarEntregado() {
+            document.getElementById("mensaje").innerText = "Estado: Entregado";
+        }
+    </script>
+
+</body>
 </html>
