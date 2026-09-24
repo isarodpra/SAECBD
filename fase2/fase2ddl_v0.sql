@@ -36,3 +36,5 @@ CREATE TABLE prestamos (
   id_ejemplar       INTEGER      NOT NULL REFERENCES ejemplares(id_ejemplar)
 );
 
+-- Aqui se añade un comentario para la practica de hoy
+
