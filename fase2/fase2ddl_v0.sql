@@ -36,5 +36,9 @@ CREATE TABLE prestamos (
   id_ejemplar       INTEGER      NOT NULL REFERENCES ejemplares(id_ejemplar)
 );
 
+--Failed to run sql query: ERROR:  23503: insert or update on table "prestamos" violates foreign key constraint "prestamos_id_usuario_fkey"
+--DETAIL:  Key (id_usuario)=(999) is not present in table "usuarios".
+
+
 -- Aqui se añade un comentario para la practica de hoy
 
