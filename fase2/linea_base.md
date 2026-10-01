@@ -1,4 +1,4 @@
-# Línea base de tiempos (sin índices)
+# Línea base de tiempos (Biblioteca)
 
 | Consulta | Execution Time (ms) | Seq Scan | Columna a indexar |
 |---|---|---|---|
