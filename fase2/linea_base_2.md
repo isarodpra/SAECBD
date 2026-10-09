@@ -124,6 +124,29 @@ WHERE p.id_usuario = 42;
 
 Índice 2
 
+-- C3 ZackDream
+DROP INDEX IF EXISTS prestamos_id_ejemplar_idx;
+ANALYZE prestamos;
+
+SELECT id_ejemplar FROM prestamos LIMIT 5;
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id_prestamo, fecha_prestamo, fecha_devolucion, estatus
+FROM prestamos
+WHERE id_ejemplar = 123; -- Reemplaza 123 por un id real
+
+CREATE INDEX IF NOT EXISTS prestamos_id_ejemplar_idx
+ON public.prestamos (id_ejemplar);
+
+
+ANALYZE prestamos;
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id_prestamo, fecha_prestamo, fecha_devolucion, estatus
+FROM prestamos
+WHERE id_ejemplar = 123;
+
+
 Índice 3
 
 Índice 4
