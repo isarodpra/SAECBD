@@ -34,6 +34,26 @@ WHERE EXISTS (
   WHERE p.id_usuario = u.id_usuario AND p.monto > 90
 );
 
+-- C6: Obtiene los usuarios cuyo gasto total en préstamos supera el promedio general, ordenados de mayor a menor.
+WITH gasto_por_usuario AS (
+  SELECT id_usuario, sum(monto) AS total_gastado
+  FROM prestamos
+  GROUP BY id_usuario
+)
+SELECT u.nombre, g.total_gastado
+FROM gasto_por_usuario g
+JOIN usuarios u USING (id_usuario)
+WHERE g.total_gastado > (SELECT avg(total_gastado) FROM gasto_por_usuario)
+ORDER BY g.total_gastado DESC;
+
+-- C7: Calcula la cantidad total de préstamos y el dinero acumulado mes a mes de forma cronológica.
+SELECT date_trunc('month', fecha_prestamo) AS mes,
+       count(*) AS num_prestamos,
+       sum(monto) AS monto_total
+FROM prestamos
+GROUP BY 1
+ORDER BY 1;
+
 /*
 Parte 3
 Consulta 1 C7
