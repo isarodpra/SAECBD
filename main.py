@@ -4,7 +4,16 @@ from psycopg.rows import dict_row
 from fastapi import FastAPI, HTTPException
 
 app = FastAPI(title="API de mi equipo - Sistema de Biblioteca")
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL and os.path.exists(".env"):
+    with open(".env") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("DATABASE_URL="):
+                DATABASE_URL = line.split("=", 1)[1].strip("\"'")
+
+if not DATABASE_URL:
+    raise RuntimeError("❌ ERROR: DATABASE_URL no está definida en el entorno ni en .env")
 
 
 @app.get("/salud")
