@@ -17,24 +17,24 @@ def conectar():
 
 def preparar_bd():
     conexion = conectar()
-    # CAMBIO 1: la tabla y sus columnas
+    # CAMBIO 1: la tabla y sus columnas (¡CORREGIDO!)
     conexion.execute("""
-        CREATE TABLE IF NOT EXISTS producto (
+        CREATE TABLE IF NOT EXISTS paciente (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
-            precio REAL NOT NULL,
-            existencias INTEGER NOT NULL
+            telefono TEXT NOT NULL,
+            edad INTEGER NOT NULL
         )
     """)
-    total = conexion.execute("SELECT COUNT(*) FROM producto").fetchone()[0]
+    total = conexion.execute("SELECT COUNT(*) FROM paciente").fetchone()[0]
     if total == 0:
         # CAMBIO 2: los datos de ejemplo
         conexion.executemany(
-            "INSERT INTO producto (nombre, precio, existencias) VALUES (?, ?, ?)",
+            "INSERT INTO paciente (nombre, telefono, edad) VALUES (?, ?, ?)",
             [
-                ("Audífonos", 499.0, 20),
-                ("Teclado", 650.5, 12),
-                ("Mouse", 299.9, 35),
+                ("Ana López", "5512345678", 34),
+                ("Luis Pérez", "5587654321", 51),
+                ("María Ruiz", "5511122233", 27),
             ],
         )
     conexion.commit()
@@ -45,10 +45,10 @@ preparar_bd()
 
 
 # CAMBIO 3: los datos que se piden al crear o actualizar
-class DatosProducto(BaseModel):
+class Datospaciente(BaseModel):
     nombre: str
-    precio: float
-    existencias: int
+    telefono: str
+    edad: int
 
 
 @app.get("/")
@@ -57,25 +57,25 @@ def inicio():
 
 
 # R de CRUD (leer todos)
-@app.get("/productos")
-def listar_productos():
+@app.get("/pacientes")
+def listar_pacientes():
     conexion = conectar()
     # CAMBIO 4: las columnas del SELECT
     filas = conexion.execute(
-        "SELECT id, nombre, precio, existencias FROM producto"
+            "SELECT id, nombre, telefono, edad FROM paciente"
     ).fetchall()
     conexion.close()
     return [dict(fila) for fila in filas]
 
 
 # R de CRUD (leer uno)
-@app.get("/productos/{producto_id}")
-def obtener_producto(producto_id: int):
+@app.get("/pacientes/{paciente_id}")
+def obtener_paciente(paciente_id: int):
     conexion = conectar()
     # CAMBIO 4: las columnas del SELECT
     fila = conexion.execute(
-        "SELECT id, nombre, precio, existencias FROM producto WHERE id = ?",
-        (producto_id,),
+        "SELECT id, nombre, telefono, edad FROM paciente WHERE id = ?",
+        (paciente_id,),
     ).fetchone()
     conexion.close()
     if fila is None:
@@ -84,13 +84,13 @@ def obtener_producto(producto_id: int):
 
 
 # C de CRUD (crear)
-@app.post("/productos", status_code=201)
-def crear_producto(datos: DatosProducto):
+@app.post("/pacientes", status_code=201)
+def crear_paciente(datos: Datospaciente):
     conexion = conectar()
     # CAMBIO 5: columnas y valores del INSERT
     cursor = conexion.execute(
-        "INSERT INTO producto (nombre, precio, existencias) VALUES (?, ?, ?)",
-        (datos.nombre, datos.precio, datos.existencias),
+        "INSERT INTO paciente (nombre, telefono, edad) VALUES (?, ?, ?)",
+        (datos.nombre, datos.telefono, datos.edad),
     )
     conexion.commit()
     nuevo_id = cursor.lastrowid
@@ -99,44 +99,44 @@ def crear_producto(datos: DatosProducto):
 
 
 # U de CRUD (actualizar)
-@app.put("/productos/{producto_id}")
-def actualizar_producto(producto_id: int, datos: DatosProducto):
+@app.put("/pacientes/{paciente_id}")
+def actualizar_paciente(paciente_id: int, datos: Datospaciente):
     conexion = conectar()
     # CAMBIO 6: columnas y valores del UPDATE
     cursor = conexion.execute(
-        "UPDATE producto SET nombre = ?, precio = ?, existencias = ? WHERE id = ?",
-        (datos.nombre, datos.precio, datos.existencias, producto_id),
+        "UPDATE paciente SET nombre = ?, telefono = ?, edad = ? WHERE id = ?",
+        (datos.nombre, datos.telefono, datos.edad, paciente_id),
     )
     conexion.commit()
     cambiadas = cursor.rowcount
     conexion.close()
     if cambiadas == 0:
         raise HTTPException(status_code=404, detail="No encontrado")
-    return {"id": producto_id, **datos.model_dump()}
+    return {"id": paciente_id, **datos.model_dump()}
 
 
 # D de CRUD (eliminar)
-@app.delete("/productos/{producto_id}")
-def eliminar_producto(producto_id: int):
+@app.delete("/pacientes/{paciente_id}")
+def eliminar_paciente(paciente_id: int):
     conexion = conectar()
-    cursor = conexion.execute("DELETE FROM producto WHERE id = ?", (producto_id,))
+    cursor = conexion.execute("DELETE FROM paciente WHERE id = ?", (paciente_id,))
     conexion.commit()
     borradas = cursor.rowcount
     conexion.close()
     if borradas == 0:
         raise HTTPException(status_code=404, detail="No encontrado")
-    return {"mensaje": f"Registro {producto_id} eliminado"}
+    return {"mensaje": f"Registro {paciente_id} eliminado"}
 
 
 # Reto: la misma lista, pero en XML
-@app.get("/productos-xml")
-def listar_productos_xml():
+@app.get("/pacientes-xml")
+def listar_pacientes_xml():
     conexion = conectar()
-    filas = conexion.execute("SELECT * FROM producto").fetchall()
+    filas = conexion.execute("SELECT * FROM paciente").fetchall()
     conexion.close()
-    raiz = ET.Element("productos")
+    raiz = ET.Element("pacientes")
     for fila in filas:
-        registro = ET.SubElement(raiz, "producto")
+        registro = ET.SubElement(raiz, "paciente")
         for columna in fila.keys():
             ET.SubElement(registro, columna).text = str(fila[columna])
     xml_texto = ET.tostring(raiz, encoding="unicode")
