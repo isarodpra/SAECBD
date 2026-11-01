@@ -2,75 +2,91 @@ import os
 import psycopg
 from psycopg.rows import dict_row
 from fastapi import FastAPI, HTTPException
+import sqlite3
+from pydantic import BaseModel
 
-app = FastAPI(title="API de mi equipo - Sistema de Biblioteca")
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL and os.path.exists(".env"):
-    with open(".env") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("DATABASE_URL="):
-                DATABASE_URL = line.split("=", 1)[1].strip("\"'")
+app = FastAPI()
 
-if not DATABASE_URL:
-    raise RuntimeError("❌ ERROR: DATABASE_URL no está definida en el entorno ni en .env")
+BD = "biblioteca.db"
 
 
-@app.get("/salud")
-def salud():
-    """Verifica la conectividad con Supabase ejecutando SELECT 1"""
-    with psycopg.connect(DATABASE_URL) as conn:
-        conn.execute("SELECT 1")
-    return {"estado": "ok"}
+def conectar():
+    conexion = sqlite3.connect(BD)
+    conexion.row_factory = sqlite3.Row
+    return conexion
 
 
-@app.get("/usuarios")
-def listar_usuarios(limite: int = 20):
-    """Lista usuarios con límite parametrizado (%s)"""
-    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
-        filas = conn.execute(
-            "SELECT id_usuario, nombre, correo, telefono, tipo_usuario FROM usuarios ORDER BY id_usuario LIMIT %s",
-            (limite,),
-        ).fetchall()
-    return filas
+def preparar_bd():
+    conexion = conectar()
+    conexion.execute("""
+        CREATE TABLE IF NOT EXISTS libro (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo TEXT NOT NULL,
+            autor TEXT NOT NULL,
+            anio INTEGER
+        )
+    """)
+    total = conexion.execute("SELECT COUNT(*) FROM libro").fetchone()[0]
+    if total == 0:
+        conexion.executemany(
+            "INSERT INTO libro (titulo, autor, anio) VALUES (?, ?, ?)",
+            [
+                ("Cien años de soledad", "Gabriel García Márquez", 1967),
+                ("Pedro Páramo", "Juan Rulfo", 1955),
+                ("Fundamentos de bases de datos", "Silberschatz", 2006),
+            ],
+        )
+    conexion.commit()
+    conexion.close()
 
 
-@app.get("/usuarios/{id_usuario}")
-def obtener_usuario(id_usuario: int):
-    """
-    Obtiene un usuario por su llave primaria id_usuario.
-    - Si id_usuario no es entero, FastAPI devuelve 422 antes de llegar a la BD.
-    - Si no existe en la base de datos, devuelve 404.
-    """
-    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
-        fila = conn.execute(
-            "SELECT id_usuario, nombre, correo, telefono, tipo_usuario FROM usuarios WHERE id_usuario = %s",
-            (id_usuario,),
-        ).fetchone()
-    if fila is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return fila
+preparar_bd()
+
+
+@app.get("/")
+def inicio():
+    return {"mensaje": "Mi primera API funciona"}
 
 
 @app.get("/libros")
-def listar_libros(limite: int = 20):
-    """Lista libros con límite parametrizado (%s)"""
-    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
-        filas = conn.execute(
-            "SELECT isbn, titulo, autor, editorial, anio_publicacion FROM libros ORDER BY isbn LIMIT %s",
-            (limite,),
-        ).fetchall()
-    return filas
+def listar_libros():
+    conexion = conectar()
+    filas = conexion.execute("SELECT id, titulo, autor, anio FROM libro").fetchall()
+    conexion.close()
+    return [dict(fila) for fila in filas]
 
-
-@app.get("/libros/{isbn}")
-def obtener_libro(isbn: str):
-    """Obtiene un libro por su ISBN con parámetro (%s)"""
-    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
-        fila = conn.execute(
-            "SELECT isbn, titulo, autor, editorial, anio_publicacion FROM libros WHERE isbn = %s",
-            (isbn,),
-        ).fetchone()
+@app.get("/libros/{libro_id}")
+def obtener_libro(libro_id: int):
+    conexion = conectar()
+    fila = conexion.execute(
+        "SELECT id, titulo, autor, anio FROM libro WHERE id = ?", (libro_id,)
+    ).fetchone()
+    conexion.close()
     if fila is None:
         raise HTTPException(status_code=404, detail="Libro no encontrado")
-    return fila
+    return dict(fila)
+
+class LibroNuevo(BaseModel):
+    titulo: str
+    autor: str
+    anio: int
+
+
+@app.post("/libros", status_code=201)
+def crear_libro(libro: LibroNuevo):
+    conexion = conectar()
+    cursor = conexion.execute(
+        "INSERT INTO libro (titulo, autor, anio) VALUES (?, ?, ?)",
+        (libro.titulo, libro.autor, libro.anio),
+    )
+    conexion.commit()
+    nuevo_id = cursor.lastrowid
+    conexion.close()
+    return {"id": nuevo_id, "titulo": libro.titulo, "autor": libro.autor, "anio": libro.anio}
+
+@app.get("/total")
+def contar_libros():
+    conexion = conectar()
+    total = conexion.execute("SELECT COUNT(*) FROM libro").fetchone()[0]
+    conexion.close()
+    return {"total": total}
