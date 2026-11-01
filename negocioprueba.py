@@ -45,7 +45,7 @@ preparar_bd()
 
 
 # CAMBIO 3: los datos que se piden al crear o actualizar
-class Datospaciente(BaseModel):
+class DatosPaciente(BaseModel):
     nombre: str
     telefono: str
     edad: int
