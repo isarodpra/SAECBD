@@ -4,8 +4,9 @@ from psycopg.rows import dict_row
 from fastapi import FastAPI, HTTPException
 import sqlite3
 from pydantic import BaseModel
+import xml.etree.ElementTree as ET
 
-app = FastAPI()
+app = FastAPI(title="API de mi negocio")
 
 BD = "biblioteca.db"
 
@@ -90,3 +91,31 @@ def contar_libros():
     total = conexion.execute("SELECT COUNT(*) FROM libro").fetchone()[0]
     conexion.close()
     return {"total": total}
+
+@app.put("/libros/{libro_id}")
+def actualizar_libro(libro_id: int, libro: LibroNuevo):
+    conexion = conectar()
+    cursor = conexion.execute(
+        "UPDATE libro SET titulo = ?, autor = ?, anio = ? WHERE id = ?",
+        (libro.titulo, libro.autor, libro.anio, libro_id),
+    )
+    conexion.commit()
+    cambiadas = cursor.rowcount
+    conexion.close()
+    if cambiadas == 0:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+    return {"id": libro_id, "titulo": libro.titulo, "autor": libro.autor, "anio": libro.anio}
+
+
+@app.delete("/libros/{libro_id}")
+def eliminar_libro(libro_id: int):
+    conexion = conectar()
+    cursor = conexion.execute("DELETE FROM libro WHERE id = ?", (libro_id,))
+    conexion.commit()
+    borradas = cursor.rowcount
+    conexion.close()
+    if borradas == 0:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+    return {"mensaje": f"Libro {libro_id} eliminado"}
+
+#python -m uvicorn main:app --reload
