@@ -113,4 +113,4 @@ def listar_libros_xml():
     xml_texto = ET.tostring(raiz, encoding="unicode")
     return Response(content=xml_texto, media_type="application/xml")
 
-#python -m uvicorn negocio:app --reload
+#http://127.0.0.1:8000 
